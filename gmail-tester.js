@@ -1,6 +1,8 @@
 const gmail = require("./gmail");
 const fs = require("fs");
-const { google } = require("googleapis");
+const {
+  google
+} = require("googleapis");
 const util = require("util");
 
 async function _get_recent_email(credentials_json, token_path, options = {}) {
@@ -8,19 +10,28 @@ async function _get_recent_email(credentials_json, token_path, options = {}) {
   // Load client secrets from a local file.
   const content = fs.readFileSync(credentials_json);
   const oAuth2Client = await gmail.authorize(JSON.parse(content), token_path);
-  const gmail_client = google.gmail({ version: "v1", oAuth2Client });
+  const gmail_client = google.gmail({
+    version: "v1",
+    oAuth2Client
+  });
   const gmail_emails = await gmail.get_recent_email(gmail_client, oAuth2Client);
   for (const gmail_email of gmail_emails) {
+    const emailFrom = gmail_email.payload.headers.find(h => h.name === "From");
+    const emailSubject = gmail_email.payload.headers.find(h => h.name === "Subject");
+    const emailTo = gmail_email.payload.headers.find(h => h.name === "To");
     const email = {
-      from: gmail_email.payload.headers.find(h => h.name === "From").value,
-      subject: gmail_email.payload.headers.find(h => h.name === "Subject")
-        .value,
-      receiver: gmail_email.payload.headers.find(h => h.name === "Delivered-To")
-        .value
+      from: emailFrom ? emailFrom.value : "",
+      subject: emailSubject ? emailSubject.value : "",
+      receiver: emailTo ? emailTo.value : ""
     };
     if (options.include_body) {
-      let email_body = { html: "", text: "" };
-      const { body } = gmail_email.payload;
+      let email_body = {
+        html: "",
+        text: ""
+      };
+      const {
+        body
+      } = gmail_email.payload;
       if (body.size) {
         switch (gmail_email.payload.mimeType) {
           case "text/html":
@@ -77,7 +88,7 @@ async function check_inbox(
       const emails = await _get_recent_email(credentials_json, token_path);
       for (let email of emails) {
         if (
-          email.receiver === to &&
+          email.receiver.indexOf(to) >= 0 &&
           email.subject.indexOf(subject) >= 0 &&
           email.from.indexOf(from) >= 0
         ) {
@@ -125,4 +136,7 @@ async function get_messages(credentials_json, token_path, options) {
   }
 }
 
-module.exports = { check_inbox, get_messages };
+module.exports = {
+  check_inbox,
+  get_messages
+};
