@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
-const { google } = require("googleapis");
+const {
+  google
+} = require("googleapis");
 const util = require("util");
 
 // If modifying these scopes, delete token.json.
@@ -17,7 +19,11 @@ const TOKEN_PATH = "token.json";
  * @param {Object} credentials The authorization client credentials.
  */
 async function authorize(credentials, token_path) {
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
+  const {
+    client_secret,
+    client_id,
+    redirect_uris
+  } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
     client_secret,
@@ -54,7 +60,7 @@ async function get_new_token(oAuth2Client, token_path) {
   return new Promise((resolve, reject) => {
     rl.question("Enter the code from that page here: ", async code => {
       rl.close();
-      oAuth2Client.getToken(code, function(err, token) {
+      oAuth2Client.getToken(code, function (err, token) {
         if (err) {
           reject(err);
         } else {
@@ -124,10 +130,10 @@ async function list_messages(gmail, oauth2Client, query, labelIds) {
  *
  * @param {google.auth.OAuth2} oauth2Client An authorized OAuth2 client.
  */
-async function get_recent_email(gmail, oauth2Client) {
+async function get_recent_email(gmail, oauth2Client, labelName = "INBOX") {
   try {
     const labels = await list_labels(gmail, oauth2Client);
-    const inbox_label_id = [labels.find(l => l.name === "INBOX").id];
+    const inbox_label_id = [labels.find(l => l.name === labelName).id];
     const messages = await list_messages(
       gmail,
       oauth2Client,
@@ -151,7 +157,29 @@ async function get_recent_email(gmail, oauth2Client) {
   } catch (error) {}
 }
 
+/**
+ * Modify the emailId  from your Gmail account
+ *
+ * @param {google.auth.OAuth2} oauth2Client An authorized OAuth2 client.
+ * @param {string} messageId An messageId.
+ * @param {string} messageId An messageId.
+ */
+async function modify_email(gmail, oauth2Client, messageId, options = {
+  addLabelIds: [],
+  removeLabelIds: []
+}) {
+  const modify = util.promisify(gmail.users.messages.modify);
+  const resp = await modify({
+    userId: "me",
+    id: messageId,
+    auth: oauth2Client,
+    resource: options
+  });
+  return resp;
+}
+
 module.exports = {
   authorize,
-  get_recent_email
+  get_recent_email,
+  modify_email
 };
