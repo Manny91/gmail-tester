@@ -117,7 +117,6 @@ async function check_inbox(
         await util.promisify(setTimeout)(wait_time_sec * 1000);
       }
     } while (!found_email);
-    console.log("email", found_email);
     return found_email;
   } catch (err) {
     console.log("[gmail] Error:", err);
