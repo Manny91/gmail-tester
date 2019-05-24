@@ -20,7 +20,6 @@ async function _get_recent_email(credentials_json, token_path, options = {
   const gmail_emails = await gmail.get_recent_email(gmail_client, oAuth2Client, options.label);
   if (gmail_emails && gmail_emails.length > 0) {
     for (const gmail_email of gmail_emails) {
-      console.log("gmail_email", gmail_email);
       const emailFrom = gmail_email.payload.headers.find(h => h.name === "From");
       const emailSubject = gmail_email.payload.headers.find(h => h.name === "Subject");
       const emailTo = gmail_email.payload.headers.find(h => h.name === "To");
